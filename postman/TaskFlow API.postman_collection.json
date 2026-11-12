@@ -1,0 +1,40 @@
+{
+  "info": {
+    "_postman_id": "1cd1a122-0ddf-45dd-81e6-fb1950ac19b6",
+    "name": "TaskFlow API",
+    "description": "Local workflow for TaskFlow. Select the TaskFlow Local environment and run Login first. Postman keeps the HTTP-only session cookie in its cookie jar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:5000/api" }],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        { "name": "Register", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Taylor Demo\",\n  \"email\": \"taylor@example.com\",\n  \"password\": \"TaskflowDemo2026!\",\n  \"confirmPassword\": \"TaskflowDemo2026!\"\n}" }, "url": "{{baseUrl}}/auth/register" } },
+        { "name": "Login", "event": [{ "listen": "test", "script": { "exec": ["pm.test('signed in', function () { pm.response.to.have.status(200); });"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}" }, "url": "{{baseUrl}}/auth/login" } },
+        { "name": "Current user", "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" } },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Projects and tasks",
+      "item": [
+        { "name": "Create project", "event": [{ "listen": "test", "script": { "exec": ["pm.test('project created', function () { pm.response.to.have.status(201); });", "if (pm.response.code === 201) pm.environment.set('projectId', pm.response.json().project.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman workflow\",\n  \"description\": \"Created from the TaskFlow Postman collection.\",\n  \"status\": \"ACTIVE\"\n}" }, "url": "{{baseUrl}}/projects" } },
+        { "name": "Add member", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"role\": \"MEMBER\"\n}" }, "url": "{{baseUrl}}/projects/{{projectId}}/members" } },
+        { "name": "Create task", "event": [{ "listen": "test", "script": { "exec": ["pm.test('task created', function () { pm.response.to.have.status(201); });", "if (pm.response.code === 201) pm.environment.set('taskId', pm.response.json().task.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"projectId\": {{projectId}},\n  \"title\": \"Review the launch checklist\",\n  \"description\": \"Confirm the release handoff details.\",\n  \"priority\": \"HIGH\",\n  \"assigneeId\": null\n}" }, "url": "{{baseUrl}}/tasks" } },
+        { "name": "Move task to in progress", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" }, "url": "{{baseUrl}}/tasks/{{taskId}}/status" } },
+        { "name": "Add task comment", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"body\": \"Added from Postman.\"\n}" }, "url": "{{baseUrl}}/tasks/{{taskId}}/comments" } },
+        { "name": "Project details", "request": { "method": "GET", "url": "{{baseUrl}}/projects/{{projectId}}" } },
+        { "name": "Task list", "request": { "method": "GET", "url": "{{baseUrl}}/tasks?projectId={{projectId}}&page=1&limit=20" } }
+      ]
+    },
+    {
+      "name": "Dashboard and notifications",
+      "item": [
+        { "name": "Dashboard stats", "request": { "method": "GET", "url": "{{baseUrl}}/dashboard/stats" } },
+        { "name": "Notifications", "request": { "method": "GET", "url": "{{baseUrl}}/notifications" } },
+        { "name": "Mark notifications read", "request": { "method": "PATCH", "url": "{{baseUrl}}/notifications/read-all" } }
+      ]
+    }
+  ]
+}
