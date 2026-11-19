@@ -6,6 +6,14 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('taskflow_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const errorMessage = (error, fallback = 'Something went wrong. Please try again.') => error?.response?.data?.error || error?.response?.data?.message || fallback;
 
 export const authApi = {

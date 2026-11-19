@@ -4,7 +4,9 @@ import { HttpError } from '../utils/httpError.js';
 
 export async function requireAuth(req, _res, next) {
   try {
-    const token = req.cookies?.taskflow_token;
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const token = req.cookies?.taskflow_token || bearerToken;
     if (!token) throw new HttpError(401, 'Please sign in to continue.');
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const user = await prisma.user.findUnique({

@@ -4,35 +4,37 @@ import { prisma } from '../config/prisma.js';
 import { HttpError } from '../utils/httpError.js';
 
 const publicUser = ({ id, fullName, email, createdAt }) => ({ id, fullName, email, createdAt });
+const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
   path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 function setSession(res, user) {
   const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.cookie('taskflow_token', token, cookieOptions());
+  return token;
 }
 
 export async function register(req, res) {
   const { fullName, email, password } = req.body;
   if (await prisma.user.findUnique({ where: { email } })) throw new HttpError(409, 'An account with that email already exists.');
   const user = await prisma.user.create({ data: { fullName, email, passwordHash: await bcrypt.hash(password, 12) } });
-  setSession(res, user);
-  res.status(201).json({ user: publicUser(user) });
+  const token = setSession(res, user);
+  res.status(201).json({ user: publicUser(user), token });
 }
 
 export async function login(req, res) {
   const user = await prisma.user.findUnique({ where: { email: req.body.email } });
   if (!user || !(await bcrypt.compare(req.body.password, user.passwordHash))) throw new HttpError(401, 'Email or password is incorrect.');
-  setSession(res, user);
-  res.json({ user: publicUser(user) });
+  const token = setSession(res, user);
+  res.json({ user: publicUser(user), token });
 }
 
 export function logout(_req, res) {
-  res.clearCookie('taskflow_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  res.clearCookie('taskflow_token', cookieOptions());
   res.json({ message: 'Signed out.' });
 }
 

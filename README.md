@@ -101,7 +101,7 @@ erDiagram
 
    Use `npm run db:deploy -w server` to apply committed migrations in production. `npm run db:studio -w server` opens Prisma Studio.
 
-5. Start the API and client together:
+5. Start the API and client together (Terminal):
 
    ```bash
    npm run dev

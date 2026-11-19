@@ -13,9 +13,26 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user, loading,
-    async login(credentials) { const { data } = await authApi.login(credentials); setUser(data.user); return data.user; },
-    async register(values) { const { data } = await authApi.register(values); setUser(data.user); return data.user; },
-    async logout() { try { await authApi.logout(); } finally { setUser(null); } },
+    async login(credentials) {
+      const { data } = await authApi.login(credentials);
+      if (data.token) localStorage.setItem('taskflow_token', data.token);
+      setUser(data.user);
+      return data.user;
+    },
+    async register(values) {
+      const { data } = await authApi.register(values);
+      if (data.token) localStorage.setItem('taskflow_token', data.token);
+      setUser(data.user);
+      return data.user;
+    },
+    async logout() {
+      try {
+        await authApi.logout();
+      } finally {
+        localStorage.removeItem('taskflow_token');
+        setUser(null);
+      }
+    },
     updateUser(next) { setUser(next); },
   }), [user, loading]);
 
